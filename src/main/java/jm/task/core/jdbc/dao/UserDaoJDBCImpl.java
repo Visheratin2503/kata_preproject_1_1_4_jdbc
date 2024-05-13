@@ -21,93 +21,68 @@ public class UserDaoJDBCImpl implements UserDao {
     private static final String GET_ALL_USERS_SQL = "SELECT * FROM users";
     private static final String CLEAN_USERS_TABLE_SQL = "DELETE FROM users";
 
-Connection connection;
-    Statement stmt;
+    private Connection connection;
 
     public UserDaoJDBCImpl() {
-        try {
-            connection = Util.getConnection();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        connection = Util.getConnection();
     }
 
     public void createUsersTable() {
-    try {
-        connection.setAutoCommit(false);
-        Statement stmt = connection.createStatement();
-        // создание таблицы
-
-        stmt.executeUpdate(CREATE_USERS_TABLE_SQL);
-        connection.commit();
-    } catch (SQLException e) {
-        e.printStackTrace();
         try {
-            connection.rollback();
-        } catch (SQLException ex) {
-            ex.printStackTrace();
+            connection.setAutoCommit(false);
+            try (Statement stmt = connection.createStatement()) {
+                stmt.executeUpdate(CREATE_USERS_TABLE_SQL);
+            }
+            connection.commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
-}
+
     @Override
     public void dropUsersTable() {
         try {
             connection.setAutoCommit(false);
-            Statement stmt = connection.createStatement();
-
-            // удаление таблицы
-            stmt.executeUpdate(DROP_USERS_TABLE_SQL);
+            try (Statement stmt = connection.createStatement()) {
+                stmt.executeUpdate(DROP_USERS_TABLE_SQL);
+            }
             connection.commit();
         } catch (SQLException e) {
             e.printStackTrace();
-            try {
-                connection.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
         }
     }
+
     @Override
     public void saveUser(String name, String lastName, byte age) {
         try {
             connection.setAutoCommit(false);
+            try (PreparedStatement preparedStatement = connection.prepareStatement(SAVE_USER_SQL)) {
+                preparedStatement.setString(1, name);
+                preparedStatement.setString(2, lastName);
+                preparedStatement.setByte(3, age);
 
-            // пред запрос
-            PreparedStatement preparedStatement = connection.prepareStatement(SAVE_USER_SQL);
-            preparedStatement.setString(1, name);
-            preparedStatement.setString(2, lastName);
-            preparedStatement.setByte(3, age);
-
-            // запрос
-            preparedStatement.executeUpdate();
-
+                preparedStatement.executeUpdate();
+            }
             connection.commit();
         } catch (SQLException e) {
             e.printStackTrace();
-            try {
-                connection.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
         }
     }
+
     @Override
     public void removeUserById(long id) {
         try {
             connection.setAutoCommit(false);
-            PreparedStatement preparedStatement = connection.prepareStatement(REMOVE_USER_BY_ID_SQL);
-            preparedStatement.setLong(1, id);
-            preparedStatement.executeUpdate();
+            try (PreparedStatement preparedStatement = connection.prepareStatement(REMOVE_USER_BY_ID_SQL)) {
+                preparedStatement.setLong(1, id);
+                preparedStatement.executeUpdate();
+            }
             connection.commit();
         } catch (SQLException e) {
             e.printStackTrace();
-            try {
-                connection.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
         }
     }
+
     @Override
     public List<User> getAllUsers() {
         List<User> userList = new ArrayList<>();
@@ -133,17 +108,14 @@ Connection connection;
     public void cleanUsersTable() {
         try {
             connection.setAutoCommit(false);
-            Statement stmt = connection.createStatement();
-            stmt.executeUpdate(CLEAN_USERS_TABLE_SQL);
+            try (Statement stmt = connection.createStatement()) {
+                stmt.executeUpdate(CLEAN_USERS_TABLE_SQL);
+            }
             connection.commit();
         } catch (SQLException e) {
             e.printStackTrace();
-            try {
-                connection.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
         }
     }
 }
+
 
